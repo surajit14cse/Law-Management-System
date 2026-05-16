@@ -1,0 +1,61 @@
+1. The Core Diary & Cause List Module (The Engine)
+
+This is the daily operational hub for the lawyer.
+
+    Automated Daily Cause List: A dynamic dashboard displaying all cases scheduled for the current day.
+
+    Advanced Filtering: Ability to filter the daily list by Court Name, Case Type (Civil/Criminal), or specific Judges/Magistrates.
+
+    Next Hearing Updater: A quick-action modal to update the outcome of today's hearing, set the next_hearing_date, and define the next_stage (e.g., Evidence, Argument, Order).
+
+    Schedule Conflict Engine: A system warning that alerts the user if they try to schedule two hearings in geographically different courts on the exact same date and time.
+
+2. Case & Client Management (CRM)
+
+The central repository for all legal entities.
+
+    Unified Client Profiles: A directory of clients (name, phone, email) linked to their respective cases. One client can have multiple active cases.
+
+    Comprehensive Case Details: Fields for Case Number, Year, Court Type, Presiding Judge, Police Station (for criminal cases), and Opposite Party/Opposing Counsel details.
+
+    Chronological Case History: A timeline view for each case that logs every past hearing date, the stage it was at, and the specific order passed by the judge on that day.
+
+    Document Vault: Cloud storage integration to securely upload and link PDFs, FIR copies, evidence photos, and drafted petitions directly to the specific case file.
+
+3. Task & Workflow Management
+
+Lawyers do a lot of work outside the courtroom that needs tracking.
+
+    To-Do Lists: Task tracking for drafting documents, researching case laws, or scheduling client meetings.
+
+    Statutory Deadlines (Limitation Tracker): A countdown or alert system for strict legal deadlines (e.g., "Must file appeal within 30 days of the lower court's order").
+
+4. Automated Alerts & Notifications
+
+Crucial for reducing no-shows and missed dates.
+
+    Morning Docket Push: An automated morning notification (or email summary) sent to the lawyer with their schedule for the day.
+
+    Client SMS/WhatsApp Integration: Automated messages triggered 24 to 48 hours before a hearing, reminding the client to appear in court or contact their lawyer.
+
+    Task Reminders: In-app alerts for pending drafts or approaching filing deadlines.
+
+5. Financial & Billing Module
+
+To keep track of the chamber's revenue.
+
+    Fee Ledger: Tracking the total agreed professional fee, advance payments received, and outstanding dues per case.
+
+    Expense Tracking: Logging out-of-pocket expenses incurred by the lawyer (e.g., court fees, clerkage, stamp duty) that need to be billed to the client.
+
+    Invoice & Receipt Generation: Generating automated, printable PDF receipts for payments made.
+
+6. Role-Based Access Control (RBAC)
+
+Essential if the software is for a law firm or a senior lawyer with a team.
+
+    Super Admin (Senior Lawyer): Full access to financials, deleting cases, and assigning tasks.
+
+    Junior Advocate: Can view the cause list, update hearing dates, and upload documents, but cannot view the financial ledger.
+
+    Clerk/Assistant: Restricted access to only add new clients, set next dates, and print the daily cause list.
