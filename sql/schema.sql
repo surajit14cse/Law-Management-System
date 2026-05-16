@@ -71,3 +71,15 @@ CREATE TABLE IF NOT EXISTS tasks (
     FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE SET NULL
 );
 
+-- Client Documents Table
+CREATE TABLE IF NOT EXISTS client_documents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    file_type VARCHAR(50),
+    file_size INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+);
+

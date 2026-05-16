@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { Plus, Search, Mail, Phone, MapPin, X } from 'lucide-react';
+import { Plus, Search, Mail, Phone, MapPin, X, Upload } from 'lucide-react';
 
 const Clients = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', address: '' });
+  const [selectedFile, setSelectedFile] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,12 +26,28 @@ const Clients = () => {
     }
   };
 
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const data = new FormData();
+    data.append('name', formData.name);
+    data.append('phone', formData.phone);
+    data.append('email', formData.email);
+    data.append('address', formData.address);
+    if (selectedFile) {
+      data.append('document', selectedFile);
+    }
+
     try {
-      await api.post('/clients', formData);
+      await api.post('/clients', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setShowModal(false);
       setFormData({ name: '', phone: '', email: '', address: '' });
+      setSelectedFile(null);
       fetchClients();
     } catch (error) {
       console.error('Error creating client:', error);
@@ -167,6 +184,30 @@ const Clients = () => {
                   onChange={(e) => setFormData({...formData, address: e.target.value})}
                 ></textarea>
               </div>
+
+              {/* Initial Document Upload */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Upload Initial Document (Optional)</label>
+                <div className="flex items-center gap-3">
+                  <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-slate-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all group">
+                    <Upload size={18} className="text-slate-400 group-hover:text-blue-500" />
+                    <span className="text-sm text-slate-500 group-hover:text-blue-600 truncate">
+                      {selectedFile ? selectedFile.name : 'Choose file (PDF, JPG, PNG)'}
+                    </span>
+                    <input type="file" className="hidden" onChange={handleFileChange} />
+                  </label>
+                  {selectedFile && (
+                    <button 
+                      type="button"
+                      onClick={() => setSelectedFile(null)}
+                      className="p-2 text-slate-400 hover:text-red-500 rounded-lg"
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button 
                   type="button"

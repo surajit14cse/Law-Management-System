@@ -1,23 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { User, Mail, Phone, MapPin, Briefcase, ChevronLeft, Calendar, Gavel, MessageSquare, Send } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, ChevronLeft, Calendar, Gavel, MessageSquare, Send, FileText, Download, Trash2, Upload } from 'lucide-react';
 
 const ClientDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [client, setClient] = useState(null);
   const [cases, setCases] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [docFormData, setDocFormData] = useState({ category: 'General', description: '' });
 
   useEffect(() => {
     const fetchClientData = async () => {
       try {
         const clientRes = await api.get(`/clients/${id}`);
         const casesRes = await api.get(`/cases`);
+        const docsRes = await api.get(`/clients/${id}/documents`);
         setClient(clientRes.data);
         setCases(casesRes.data.filter(c => c.client_id === parseInt(id)));
+        setDocuments(docsRes.data);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching client details:', error);
@@ -26,6 +32,54 @@ const ClientDetails = () => {
     };
     fetchClientData();
   }, [id]);
+
+  const fetchDocuments = async () => {
+    try {
+      const response = await api.get(`/clients/${id}/documents`);
+      setDocuments(response.data);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('document', selectedFile);
+    formData.append('category', docFormData.category);
+    formData.append('description', docFormData.description);
+
+    try {
+      await api.post(`/clients/${id}/documents`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setSelectedFile(null);
+      setDocFormData({ category: 'General', description: '' });
+      fetchDocuments();
+      alert('Document uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      alert('Failed to upload document');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteDocument = async (docId) => {
+    if (!window.confirm('Are you sure you want to delete this document?')) return;
+    try {
+      await api.delete(`/clients/documents/${docId}`);
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      alert('Failed to delete document');
+    }
+  };
 
   const sendNotification = async (type) => {
     setSending(true);
@@ -142,6 +196,102 @@ const ClientDetails = () => {
                     >
                       View Details
                     </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Client Documents */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
+            <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <FileText className="text-blue-600" size={20} />
+                Client Documents ({documents.length})
+              </h3>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 border border-slate-200">
+                    <Upload size={14} />
+                    {selectedFile ? selectedFile.name : 'Select File'}
+                    <input type="file" className="hidden" onChange={handleFileChange} />
+                  </label>
+                  {selectedFile && (
+                    <button 
+                      onClick={handleUpload}
+                      disabled={uploading}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:bg-slate-300"
+                    >
+                      {uploading ? 'Uploading...' : 'Upload'}
+                    </button>
+                  )}
+                </div>
+                {selectedFile && (
+                  <div className="flex flex-col gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200 mt-2">
+                    <select 
+                      className="text-xs border border-slate-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500"
+                      value={docFormData.category}
+                      onChange={(e) => setDocFormData({...docFormData, category: e.target.value})}
+                    >
+                      <option value="General">General</option>
+                      <option value="ID Proof">ID Proof</option>
+                      <option value="Legal Paper">Legal Paper</option>
+                      <option value="Agreement">Agreement</option>
+                      <option value="Invoice">Invoice</option>
+                      <option value="Others">Others</option>
+                    </select>
+                    <input 
+                      type="text" 
+                      placeholder="Brief description..."
+                      className="text-xs border border-slate-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500"
+                      value={docFormData.description}
+                      onChange={(e) => setDocFormData({...docFormData, description: e.target.value})}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {documents.length === 0 ? (
+                <div className="p-12 text-center text-slate-500 italic">No documents uploaded for this client.</div>
+              ) : (
+                documents.map(doc => (
+                  <div key={doc.id} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="p-2 bg-slate-100 text-slate-500 rounded-lg">
+                        <FileText size={18} />
+                      </div>
+                      <div className="overflow-hidden">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-slate-700 text-sm truncate">{doc.file_name}</h4>
+                          <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[9px] font-bold rounded uppercase tracking-tighter">
+                            {doc.category || 'General'}
+                          </span>
+                        </div>
+                        {doc.description && <p className="text-[10px] text-slate-500 truncate">{doc.description}</p>}
+                        <p className="text-[10px] text-slate-400">
+                          Uploaded on {new Date(doc.created_at).toLocaleDateString()} • {(doc.file_size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <a 
+                        href={`${api.defaults.baseURL.replace('/api', '')}/${doc.file_path.replace(/\\/g, '/')}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Download"
+                      >
+                        <Download size={18} />
+                      </a>
+                      <button 
+                        onClick={() => handleDeleteDocument(doc.id)}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
