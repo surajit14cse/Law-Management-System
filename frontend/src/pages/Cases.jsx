@@ -54,8 +54,11 @@ const Cases = () => {
         hearing_date: ''
       });
       fetchCases();
+      alert('Case registered successfully!');
     } catch (error) {
       console.error('Error creating case:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to create case. Please try again.';
+      alert(errorMsg);
     }
   };
 

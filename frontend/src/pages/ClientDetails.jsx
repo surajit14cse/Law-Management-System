@@ -17,16 +17,35 @@ const ClientDetails = () => {
 
   useEffect(() => {
     const fetchClientData = async () => {
+      setLoading(true);
       try {
+        // Fetch client basic info first
         const clientRes = await api.get(`/clients/${id}`);
-        const casesRes = await api.get(`/cases`);
-        const docsRes = await api.get(`/clients/${id}/documents`);
         setClient(clientRes.data);
-        setCases(casesRes.data.filter(c => c.client_id === parseInt(id)));
-        setDocuments(docsRes.data);
-        setLoading(false);
+        
+        // Fetch associated data in parallel
+        const [casesRes, docsRes] = await Promise.allSettled([
+          api.get(`/cases`),
+          api.get(`/clients/${id}/documents`)
+        ]);
+
+        if (casesRes.status === 'fulfilled') {
+          // Use lenient comparison (==) instead of strict (===) to handle potential string/number mismatches
+          setCases(casesRes.value.data.filter(c => c.client_id == id));
+        } else {
+          console.error('Error fetching cases:', casesRes.reason);
+        }
+
+        if (docsRes.status === 'fulfilled') {
+          setDocuments(docsRes.value.data);
+        } else {
+          console.error('Error fetching documents:', docsRes.reason);
+        }
+
       } catch (error) {
         console.error('Error fetching client details:', error);
+        // If client basic info fails, we can't show much
+      } finally {
         setLoading(false);
       }
     };
@@ -119,11 +138,11 @@ const ClientDetails = () => {
               <div className="relative -mt-12 mb-4">
                 <div className="w-24 h-24 rounded-2xl bg-white p-1 shadow-lg">
                   <div className="w-full h-full rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-3xl">
-                    {client.name.charAt(0)}
+                    {client.name ? client.name.charAt(0) : '?'}
                   </div>
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-slate-800">{client.name}</h2>
+              <h2 className="text-2xl font-bold text-slate-800">{client.name || 'Unknown Client'}</h2>
               <p className="text-slate-500 text-sm mb-6 uppercase font-bold tracking-wider">Client Profile</p>
               
               <div className="space-y-4 mb-8">
