@@ -1,5 +1,7 @@
 const Hearing = require('../models/hearingModel');
 const Case = require('../models/caseModel');
+const Client = require('../models/clientModel');
+const NotificationService = require('../services/notificationService');
 
 exports.getHearingsByDate = async (req, res) => {
   try {
@@ -13,7 +15,7 @@ exports.getHearingsByDate = async (req, res) => {
 
 exports.createHearing = async (req, res) => {
   try {
-    const { case_id } = req.body;
+    const { case_id, hearing_date, hearing_time, stage } = req.body;
     
     // Verify case ownership
     const caseData = await Case.findById(case_id, req.user.id);
@@ -22,6 +24,18 @@ exports.createHearing = async (req, res) => {
     }
 
     const hearingId = await Hearing.create(req.body);
+
+    // Send SMS Notification to Client
+    try {
+      const client = await Client.findById(caseData.client_id, req.user.id);
+      if (client && client.phone) {
+        const message = `Hello ${client.name}, a new hearing for your case (${caseData.case_number}) has been scheduled for ${new Date(hearing_date).toLocaleDateString()} at ${hearing_time || 'TBD'}. Stage: ${stage || 'N/A'}. - LawConnect`;
+        await NotificationService.sendSMS(client.phone, message);
+      }
+    } catch (notifyError) {
+      console.error('Failed to send hearing creation notification:', notifyError);
+    }
+
     res.status(201).json({ id: hearingId, ...req.body });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -49,6 +63,18 @@ exports.updateHearingOutcome = async (req, res) => {
         stage: stage || 'Next Hearing',
         notes: `Automatically scheduled from hearing on ${new Date().toISOString().split('T')[0]}`
       });
+
+      // Send SMS Notification for the next date
+      try {
+        const caseData = await Case.findById(hearing.case_id, req.user.id);
+        const client = await Client.findById(caseData.client_id, req.user.id);
+        if (client && client.phone) {
+          const message = `Hello ${client.name}, your next hearing for case ${caseData.case_number} has been set for ${new Date(next_hearing_date).toLocaleDateString()}. Stage: ${stage || 'Next Hearing'}. - LawConnect`;
+          await NotificationService.sendSMS(client.phone, message);
+        }
+      } catch (notifyError) {
+        console.error('Failed to send next hearing notification:', notifyError);
+      }
     }
 
     res.json({ message: 'Hearing outcome updated successfully' });

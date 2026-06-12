@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { Plus, Search, Mail, Phone, MapPin, X, Upload } from 'lucide-react';
+import { Plus, Search, Mail, Phone, MapPin, X, Upload, Trash2 } from 'lucide-react';
 
 const Clients = () => {
   const [clients, setClients] = useState([]);
@@ -23,6 +23,18 @@ const Clients = () => {
     } catch (error) {
       console.error('Error fetching clients:', error);
       setLoading(false);
+    }
+  };
+
+  const handleDeleteClient = async (id, name) => {
+    if (window.confirm(`Are you sure you want to delete client "${name}"? This will also delete all associated cases and documents.`)) {
+      try {
+        await api.delete(`/clients/${id}`);
+        fetchClients();
+      } catch (error) {
+        console.error('Error deleting client:', error);
+        alert('Failed to delete client. Please try again.');
+      }
     }
   };
 
@@ -122,12 +134,21 @@ const Clients = () => {
                     {new Date(client.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4">
-                    <button 
-                      onClick={() => navigate(`/clients/${client.id}`)}
-                      className="text-blue-600 hover:text-blue-800 font-bold text-xs"
-                    >
-                      View Profile
-                    </button>
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => navigate(`/clients/${client.id}`)}
+                        className="text-blue-600 hover:text-blue-800 font-bold text-xs"
+                      >
+                        View Profile
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteClient(client.id, client.name)}
+                        className="text-slate-400 hover:text-red-600 transition-colors p-1"
+                        title="Delete Client"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

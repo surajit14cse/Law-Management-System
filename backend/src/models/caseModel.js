@@ -1,12 +1,29 @@
 const pool = require('../config/db');
 
 class Case {
+  static async generateCaseNumber() {
+    const year = new Date().getFullYear();
+    const [rows] = await pool.query('SELECT COUNT(*) as count FROM cases WHERE case_year = ?', [year]);
+    const nextNumber = rows[0].count + 1;
+    // Format: LC-2026-0001
+    return `LC-${year}-${nextNumber.toString().padStart(4, '0')}`;
+  }
+
   static async create(data) {
-    const { 
+    let { 
       user_id, client_id, case_number, case_year, court_type, court_name, 
       presiding_judge, police_station, opposite_party, opposing_counsel, 
       case_status, description 
     } = data;
+    
+    // Auto-generate case number if not provided
+    if (!case_number || case_number === '') {
+      case_number = await this.generateCaseNumber();
+    }
+
+    if (!case_year) {
+      case_year = new Date().getFullYear();
+    }
     
     // Helper to convert undefined or empty string to null
     const val = (v) => (v === undefined || v === '' || v === null) ? null : v;

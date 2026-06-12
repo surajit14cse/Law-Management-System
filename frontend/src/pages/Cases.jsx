@@ -212,9 +212,12 @@ const Cases = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">Case Number</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                    Case Number <span className="text-slate-400 font-normal lowercase">(Auto-generated if empty)</span>
+                  </label>
                   <input 
-                    type="text" required
+                    type="text"
+                    placeholder="e.g. 123/2026"
                     className="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
                     value={formData.case_number}
                     onChange={(e) => setFormData({...formData, case_number: e.target.value})}
